@@ -9,19 +9,27 @@ const transport = nodemailer.createTransport({
   port: process.env.MAIL_PORT,
   auth: {
     user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PAS
+    pass: process.env.MAIL_PASS
   }
 });
 
-exports.send = async(options) => {
+//not exports as it is not needed anywhere else (needs an export)
+const generateHTML = (filename, options = {}) => {
+  const html = pug.renderFile(`${__dirname}/../views/email/${filename}.pug`, options);
+  const inlined = juice(html);
+  return inlined;
+}
+
+exports.send = async (options) => {
+  const html = generateHTML(options.filename, options);
+  const text = htmlToText.fromString(html);
   const mailOptions = {
-    from: `Paul L <noreply@paul.com>`,
+    from: `Paul Lop <paullopushinsky@gmail.com>`,
     to: options.user.email,
     subject: options.subject,
-    html: 'This will be filled in later',
-    text: 'This will fill later'
+    html,
+    text
   };
-
   const sendMail = promisify(transport.sendMail, transport);
   return sendMail(mailOptions);
 }
